@@ -4,7 +4,6 @@
  */
 
 var toFunction = require('to-function')
-  , Protocol = require('protocol') 
   , proto = {}
 
 /**
@@ -607,7 +606,7 @@ proto.array = function(){
 	return this.value
 }
 
-var Enumerable = Protocol(proto).implement(Array)
+var Enumerable = require('jkroso-protocol')(proto).implement(Array)
 
 /**
  * Expose `Enumerable`.
