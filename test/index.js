@@ -3,7 +3,9 @@ var Enumerable = require('..')
   , User = require('./support/user')
   , _ = Enumerable
 
-Enumerable(User.prototype);
+Enumerable.mixin(User.prototype, function () {
+  return Object.keys(this)
+});
 
 var user = new User('Tobi', 'Holowaychuk');
 
@@ -11,11 +13,11 @@ describe('.each(fn)', function(){
   it('should iterate each value', function(){
     var vals = [];
 
-    user.each(function(val){
-      vals.push(val);
+    user.each(function(val, i){
+      vals.push(val, i);
     });
 
-    vals.should.eql(['first', 'last']);
+    vals.should.eql(['first', 0, 'last', 1]);
   })
 })
 
@@ -156,7 +158,7 @@ describe('.select(fn)', function(){
   it('should select values of truthy return', function(){
     _([1,2,3,4,5]).select(function(n){
       return n < 3;
-    }).value().should.eql([1,2]);
+    }).value.should.eql([1,2]);
   })
 })
 
@@ -177,7 +179,7 @@ describe('.reject(fn)', function(){
   it('should select values of falsey return', function(){
     _([1,2,3,4,5]).reject(function(n){
       return n < 3;
-    }).value().should.eql([3,4,5]);
+    }).value.should.eql([3,4,5]);
   })
 })
 
@@ -196,13 +198,13 @@ describe('.reject(str)', function(){
 
 describe('.reject(val)', function(){
   it('should reject values with ==', function(){
-    _([1,null,2,undefined]).reject(null).value().should.eql([1,2]);
+    _([1,null,2,undefined]).reject(null).value.should.eql([1,2]);
   })
 })
 
 describe('.compact()', function(){
   it('should reject == null', function(){
-    _([1,null,2,undefined]).compact().value().should.eql([1,2]);
+    _([1,null,2,undefined]).compact().value.should.eql([1,2]);
   })
 })
 
@@ -300,7 +302,7 @@ describe('.has(value)', function(){
 
 describe('.grep(regexp)', function(){
   it('should return values matching the regexp', function(){
-    _(['foo', 'bar', 'baz']).grep(/^b/).value().should.eql(['bar', 'baz']);
+    _(['foo', 'bar', 'baz']).grep(/^b/).value.should.eql(['bar', 'baz']);
   })
 })
 
@@ -359,17 +361,17 @@ describe('.inGroupsOf(n)', function(){
   it('should return an array in groups of N', function(){
     _([1,2,3,4,5,6])
       .inGroupsOf(3)
-      .value()
+      .value
       .should.eql([[1,2,3], [4,5,6]]);
 
     _([1,2,3,4,5,6])
       .inGroupsOf(2)
-      .value()
+      .value
       .should.eql([[1,2], [3,4], [5,6]]);
 
     _([1,2,3,4,5,6,7])
       .inGroupsOf(2)
-      .value()
+      .value
       .should.eql([[1,2], [3,4], [5,6], [7]]);
   })
 })
@@ -379,7 +381,7 @@ describe('.map(fn)', function(){
     _([1,2,3])
     .map(function(n){
       return n * 2;
-    }).value().should.eql([2,4,6]);
+    }).value.should.eql([2,4,6]);
   })
 })
 
@@ -387,7 +389,7 @@ describe('.map(str)', function(){
   it('should map property values', function(){
     _([{ age: 2 }, { age: 2 }, { age: 8 }])
       .map('age')
-      .value()
+      .value
       .should.eql([2, 2, 8]);
   })
 
@@ -449,6 +451,6 @@ describe('.toJSON()', function(){
 
 describe('.toString()', function(){
   it('should return a string representation', function(){
-    new Enumerable(user).toString().should.equal('[Enumerable ["first","last"]]');
+    user.toString().should.equal('[Enumerable ["first","last"]]');
   })
 })

@@ -4,56 +4,8 @@
  */
 
 var toFunction = require('to-function')
-  , proto = {};
-
-/**
- * Expose `Enumerable`.
- */
-
-module.exports = Enumerable;
-
-/**
- * Mixin to `obj`.
- *
- *    var Enumerable = require('enumerable');
- *    Enumerable(Something.prototype);
- *
- * @param {Object} obj
- * @return {Object} obj
- */
-
-function mixin(obj){
-  for (var key in proto) obj[key] = proto[key];
-  obj.__iterate__ = obj.__iterate__ || defaultIterator;
-  return obj;
-}
-
-/**
- * Initialize a new `Enumerable` with the given `obj`.
- *
- * @param {Object} obj
- * @api private
- */
-
-function Enumerable(obj) {
-  if (!(this instanceof Enumerable)) {
-    if (Array.isArray(obj)) return new Enumerable(obj);
-    return mixin(obj);
-  }
-  this.obj = obj;
-}
-
-/*!
- * Default iterator utilizing `.length` and subscripts.
- */
-
-function defaultIterator() {
-  var self = this;
-  return {
-    length: function(){ return self.length },
-    get: function(i){ return self[i] }
-  }
-}
+  , Protocol = require('protocol') 
+  , proto = {}
 
 /**
  * Return a string representation of this enumerable.
@@ -64,23 +16,20 @@ function defaultIterator() {
  * @api public
  */
 
-Enumerable.prototype.inspect =
-Enumerable.prototype.toString = function(){
-  return '[Enumerable ' + JSON.stringify(this.obj) + ']';
-};
+proto.inspect =
+proto.toString = function(){
+	return '[Enumerable ' + JSON.stringify(this) + ']'
+}
 
 /**
- * Iterate enumerable.
+ * Return the number of items
  *
- * @return {Object}
- * @api private
+ * @return {Number} item count
+ * @api public
  */
-
-Enumerable.prototype.__iterate__ = function(){
-  var obj = this.obj;
-  obj.__iterate__ = obj.__iterate__ || defaultIterator;
-  return obj.__iterate__();
-};
+proto.length = function () {
+	return this.value.length
+}
 
 /**
  * Iterate each value and invoke `fn(val, i)`.
@@ -95,13 +44,14 @@ Enumerable.prototype.__iterate__ = function(){
  */
 
 proto.each = function(fn){
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    fn(vals.get(i), i);
-  }
-  return this;
-};
+	var vals = this.value
+	  , len = vals.length
+	  , i = 0
+	while (i < len) {
+		fn(vals[i], i++)
+	}
+	return this
+}
 
 /**
  * Map each return value from `fn(val, i)`.
@@ -122,15 +72,15 @@ proto.each = function(fn){
  */
 
 proto.map = function(fn){
-  fn = toFunction(fn);
-  var vals = this.__iterate__();
-  var len = vals.length();
-  var arr = [];
-  for (var i = 0; i < len; ++i) {
-    arr.push(fn(vals.get(i), i));
-  }
-  return new Enumerable(arr);
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var vals = this.value
+	  , len = vals.length
+	  , arr = new Array(len)
+	for (var i = 0; i < len; ++i) {
+		arr[i] = fn(vals[i], i)
+	}
+	return new this.constructor(arr)
+}
 
 /**
  * Select all values that return a truthy value of `fn(val, i)`.
@@ -149,17 +99,15 @@ proto.map = function(fn){
  */
 
 proto.select = function(fn){
-  fn = toFunction(fn);
-  var val;
-  var arr = [];
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (fn(val, i)) arr.push(val);
-  }
-  return new Enumerable(arr);
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var arr = []
+	  , vals = this.value
+	  , len = vals.length
+	for (var i = 0; i < len; ++i) {
+		if (fn(vals[i], i)) arr.push(vals[i])
+	}
+	return new this.constructor(arr)
+}
 
 /**
  * Select all unique values.
@@ -171,17 +119,15 @@ proto.select = function(fn){
  */
 
 proto.unique = function(){
-  var val;
-  var arr = [];
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (~arr.indexOf(val)) continue;
-    arr.push(val);
-  }
-  return new Enumerable(arr);
-};
+	var arr = []
+	  , vals = this.value
+	  , len = vals.length
+	for (var i = 0; i < len; ++i) {
+		if (~arr.indexOf(vals[i])) continue
+		arr.push(vals[i])
+	}
+	return new this.constructor(arr)
+}
 
 /**
  * Reject all values that return a truthy value of `fn(val, i)`.
@@ -207,27 +153,24 @@ proto.unique = function(){
  */
 
 proto.reject = function(fn){
-  var val;
-  var arr = [];
-  var vals = this.__iterate__();
-  var len = vals.length();
+	var arr = []
+	  , vals = this.value
+	  , len = vals.length
 
-  if ('string' == typeof fn) fn = toFunction(fn);
+	if (typeof fn === 'string') fn = toFunction(fn)
 
-  if (fn) {
-    for (var i = 0; i < len; ++i) {
-      val = vals.get(i);
-      if (!fn(val, i)) arr.push(val);
-    }
-  } else {
-    for (var i = 0; i < len; ++i) {
-      val = vals.get(i);
-      if (val != fn) arr.push(val);
-    }
-  }
+	if (fn) {
+		for (var i = 0; i < len; ++i) {
+			if (!fn(vals[i], i)) arr.push(vals[i])
+		}
+	} else {
+		for (var i = 0; i < len; ++i) {
+			if (vals[i] != fn) arr.push(vals[i])
+		}
+	}
 
-  return new Enumerable(arr);
-};
+	return new this.constructor(arr)
+}
 
 /**
  * Reject `null` and `undefined`.
@@ -241,8 +184,8 @@ proto.reject = function(fn){
 
 
 proto.compact = function(){
-  return this.reject(null);
-};
+	return this.reject(null)
+}
 
 /**
  * Return the first value when `fn(val, i)` is truthy,
@@ -262,15 +205,13 @@ proto.compact = function(){
  */
 
 proto.find = function(fn){
-  fn = toFunction(fn);
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (fn(val, i)) return val;
-  }
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var vals = this.value
+	  , len = vals.length
+	for (var i = 0; i < len; ++i) {
+		if (fn(vals[i], i)) return vals[i]
+	}
+}
 
 /**
  * Return the last value when `fn(val, i)` is truthy,
@@ -286,17 +227,13 @@ proto.find = function(fn){
  */
 
 proto.findLast = function(fn){
-  fn = toFunction(fn);
-  var ret;
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (fn(val, i)) ret = val;
-  }
-  return ret;
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var vals = this.value
+	  , i = vals.length
+	while (i--) {
+		if (fn(vals[i], i)) return vals[i]
+	}
+}
 
 /**
  * Assert that all invocations of `fn(val, i)` are truthy.
@@ -316,16 +253,14 @@ proto.findLast = function(fn){
 
 proto.all =
 proto.every = function(fn){
-  fn = toFunction(fn);
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (!fn(val, i)) return false;
-  }
-  return true;
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var vals = this.value
+	  , i = vals.length
+	while (i--) {
+		if (!fn(vals[i], i)) return false
+	}
+	return true
+}
 
 /**
  * Assert that none of the invocations of `fn(val, i)` are truthy.
@@ -341,16 +276,14 @@ proto.every = function(fn){
  */
 
 proto.none = function(fn){
-  fn = toFunction(fn);
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (fn(val, i)) return false;
-  }
-  return true;
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var vals = this.value
+	  , i = vals.length
+	while (i--) {
+		if (fn(vals[i], i)) return false
+	}
+	return true
+}
 
 /**
  * Assert that at least one invocation of `fn(val, i)` is truthy.
@@ -365,18 +298,16 @@ proto.none = function(fn){
  * @return {Boolean}
  * @api public
  */
-
+proto.some = 
 proto.any = function(fn){
-  fn = toFunction(fn);
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (fn(val, i)) return true;
-  }
-  return false;
-};
+	if (typeof fn === 'string') fn = toFunction(fn)
+	var vals = this.value
+	  , i = vals.length
+	while (i--) {
+		if (fn(vals[i], i)) return true
+	}
+	return false
+}
 
 /**
  * Count the number of times `fn(val, i)` returns true.
@@ -391,16 +322,14 @@ proto.any = function(fn){
  */
 
 proto.count = function(fn){
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  var n = 0;
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (fn(val, i)) ++n;
-  }
-  return n;
-};
+	var vals = this.value
+	  , i = vals.length
+	  , n = 0
+	while (i--) {
+		if (fn(vals[i], i)) ++n
+	}
+	return n
+}
 
 /**
  * Determine the indexof `obj` or return `-1`.
@@ -411,15 +340,13 @@ proto.count = function(fn){
  */
 
 proto.indexOf = function(obj){
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (val === obj) return i;
-  }
-  return -1;
-};
+	var vals = this.value
+	  , len = vals.length
+	for (var i = 0; i < len; ++i) {
+		if (vals[i] === obj) return i
+	}
+	return -1
+}
 
 /**
  * Check if `obj` is present in this enumerable.
@@ -430,8 +357,8 @@ proto.indexOf = function(obj){
  */
 
 proto.has = function(obj){
-  return !! ~this.indexOf(obj);
-};
+	return !! ~this.indexOf(obj)
+}
 
 /**
  * Grep values using the given `re`.
@@ -444,16 +371,14 @@ proto.has = function(obj){
  */
 
 proto.grep = function(re){
-  var val;
-  var vals = this.__iterate__();
-  var len = vals.length();
-  var arr = [];
-  for (var i = 0; i < len; ++i) {
-    val = vals.get(i);
-    if (re.test(val)) arr.push(val);
-  }
-  return new Enumerable(arr);
-};
+	var vals = this.value
+	  , len = vals.length
+	  , arr = []
+	for (var i = 0; i < len; ++i) {
+		if (re.test(vals[i])) arr.push(vals[i])
+	}
+	return new this.constructor(arr)
+}
 
 /**
  * Reduce with `fn(accumulator, val, i)` using
@@ -467,21 +392,20 @@ proto.grep = function(re){
  */
 
 proto.reduce = function(fn, init){
-  var val;
-  var i = 0;
-  var vals = this.__iterate__();
-  var len = vals.length();
+	var i = 0
+	  , vals = this.value
+	  , len = vals.length
 
-  val = null == init
-    ? vals.get(i++)
-    : init;
+	var val = (null == init
+		? vals[i++]
+		: init)
 
-  for (; i < len; ++i) {
-    val = fn(val, vals.get(i), i);
-  }
+	while (i < len) {
+		val = fn(val, vals[i], i++)
+	}
 
-  return val;
-};
+	return val
+}
 
 /**
  * Determine the max value.
@@ -506,27 +430,22 @@ proto.reduce = function(fn, init){
  */
 
 proto.max = function(fn){
-  var val;
-  var n = 0;
-  var max = -Infinity;
-  var vals = this.__iterate__();
-  var len = vals.length();
+	var max = -Infinity
+	  , vals = this.value
+	  , i = vals.length
 
-  if (fn) {
-    fn = toFunction(fn);
-    for (var i = 0; i < len; ++i) {
-      n = fn(vals.get(i), i);
-      max = n > max ? n : max;
-    }
-  } else {
-    for (var i = 0; i < len; ++i) {
-      n = vals.get(i);
-      max = n > max ? n : max;
-    }
-  }
+	if (fn) {
+		if (typeof fn === 'string') fn = toFunction(fn)
+		var n
+		while (i--)
+			if ((n = fn(vals[i], i)) > max) max = n
+	} 
+	else
+		while (i--)
+			if (vals[i] > max) max = vals[i]
 
-  return max;
-};
+	return max
+}
 
 /**
  * Determine the sum.
@@ -551,24 +470,22 @@ proto.max = function(fn){
  */
 
 proto.sum = function(fn){
-  var ret;
-  var n = 0;
-  var vals = this.__iterate__();
-  var len = vals.length();
+	var ret
+	  , n = 0
+	  , vals = this.value
+	  , i = vals.length
 
-  if (fn) {
-    fn = toFunction(fn);
-    for (var i = 0; i < len; ++i) {
-      n += fn(vals.get(i), i);
-    }
-  } else {
-    for (var i = 0; i < len; ++i) {
-      n += vals.get(i);
-    }
-  }
+	if (fn) {
+		if (typeof fn === 'string') fn = toFunction(fn)
+		while (i--) 
+			n += fn(vals[i], i)
+	}
+	else
+		while (i--) 
+			n += vals[i]
 
-  return n;
-};
+	return n
+}
 
 /**
  * Determine the average value.
@@ -594,24 +511,8 @@ proto.sum = function(fn){
 
 proto.avg =
 proto.mean = function(fn){
-  var ret;
-  var n = 0;
-  var vals = this.__iterate__();
-  var len = vals.length();
-
-  if (fn) {
-    fn = toFunction(fn);
-    for (var i = 0; i < len; ++i) {
-      n += fn(vals.get(i), i);
-    }
-  } else {
-    for (var i = 0; i < len; ++i) {
-      n += vals.get(i);
-    }
-  }
-
-  return n / len;
-};
+	return this.sum(fn) / this.value.length
+}
 
 /**
  * Return the first value, or first `n` values.
@@ -622,20 +523,13 @@ proto.mean = function(fn){
  */
 
 proto.first = function(n){
-  if ('function' == typeof n) return this.find(n);
-  var vals = this.__iterate__();
-
-  if (n) {
-    var len = Math.min(n, vals.length());
-    var arr = new Array(len);
-    for (var i = 0; i < len; ++i) {
-      arr[i] = vals.get(i);
-    }
-    return arr;
-  }
-
-  return vals.get(0);
-};
+	if (n) {
+		if (typeof n === 'function') return this.find(n)
+		var vals = this.value
+		return vals.slice(0, Math.min(n, vals.length))
+	}
+	return this.value[0]
+}
 
 /**
  * Return the last value, or last `n` values.
@@ -646,21 +540,20 @@ proto.first = function(n){
  */
 
 proto.last = function(n){
-  if ('function' == typeof n) return this.findLast(n);
-  var vals = this.__iterate__();
-  var len = vals.length();
+	if ('function' == typeof n) return this.findLast(n)
+	var vals = this.value
+	  , len = vals.length
 
-  if (n) {
-    var i = Math.max(0, len - n);
-    var arr = [];
-    for (; i < len; ++i) {
-      arr.push(vals.get(i));
-    }
-    return arr;
-  }
+	if (n) {
+		var i = Math.max(0, len - n)
+		  , arr = []
+		while (i < len)
+			arr.push(vals[i++])
+		return arr
+	}
 
-  return vals.get(len - 1);
-};
+	return vals[len - 1]
+}
 
 /**
  * Return values in groups of `n`.
@@ -671,23 +564,23 @@ proto.last = function(n){
  */
 
 proto.inGroupsOf = function(n){
-  var arr = [];
-  var group = [];
-  var vals = this.__iterate__();
-  var len = vals.length();
+	var arr = []
+	  , group = []
+	  , vals = this.value
+	  , len = vals.length
 
-  for (var i = 0; i < len; ++i) {
-    group.push(vals.get(i));
-    if ((i + 1) % n == 0) {
-      arr.push(group);
-      group = [];
-    }
-  }
+	for (var i = 0; i < len; ++i) {
+		group.push(vals[i])
+		if ((i + 1) % n === 0) {
+			arr.push(group)
+			group = []
+		}
+	}
 
-  if (group.length) arr.push(group);
+	if (group.length) arr.push(group)
 
-  return new Enumerable(arr);
-};
+	return new this.constructor(arr)
+}
 
 /**
  * Return the value at the given index.
@@ -698,8 +591,8 @@ proto.inGroupsOf = function(n){
  */
 
 proto.at = function(i){
-  return this.__iterate__().get(i);
-};
+	return this.value[i]
+}
 
 /**
  * Return a regular `Array`.
@@ -708,30 +601,28 @@ proto.at = function(i){
  * @api public
  */
 
+proto.valueOf = 
 proto.toJSON =
 proto.array = function(){
-  var arr = [];
-  var vals = this.__iterate__();
-  var len = vals.length();
-  for (var i = 0; i < len; ++i) {
-    arr.push(vals.get(i));
-  }
-  return arr;
-};
+	return this.value
+}
+
+var Enumerable = Protocol(proto).implement(Array)
 
 /**
- * Return the enumerable value.
- *
- * @return {Mixed}
- * @api public
+ * Expose `Enumerable`.
  */
 
-proto.value = function(){
-  return this.obj;
-};
+module.exports = Enumerable
 
-/**
- * Mixin enumerable.
- */
-
-mixin(Enumerable.prototype);
+Enumerable.mixin = function (obj, get) {
+	Object.defineProperty(obj, 'value', {
+		get: get || function () {
+			return this
+		}
+	})
+	Object.keys(Enumerable.interface).forEach(function (key) {
+		obj[key] = Enumerable.interface[key]
+	})
+	return obj
+}

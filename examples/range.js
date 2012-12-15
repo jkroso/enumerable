@@ -10,15 +10,13 @@ function Range(from, to) {
   this.to = to;
 }
 
-Enumerable(Range.prototype);
-
-Range.prototype.__iterate__ = function(){
-  var self = this;
-  return {
-    length: function(){ return self.to - self.from + 1 },
-    get: function(i){ return self.from + i }
-  }
-};
+Enumerable.mixin(Range.prototype, function () {
+	var i = this.from
+	  , res = []
+	while (i < this.to)
+		res.push(i)
+	return res
+});
 
 var range = new Range(5, 10);
 

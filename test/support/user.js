@@ -6,10 +6,6 @@ function User(first, last) {
   this.last = last;
 }
 
-User.prototype.__iterate__ = function(){
-  var keys = Object.keys(this);
-  return {
-    length: function(){ return keys.length },
-    get: function(i){ return keys[i] }
-  }
-};
+require('../../index').implement(User, function Wrapper (user) {
+	this.value = Object.keys(user)
+})

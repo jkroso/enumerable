@@ -1,4 +1,3 @@
-
 # Enumerable
 
   Enumerable mixin.
@@ -11,9 +10,20 @@ users
   .grep(/^T/)
 ```
 
+ Enumerable protocol
+
+```js
+Enumerable(users)
+  .map('friends')
+  .select('age > 20')
+  .map('name.first')
+  .grep(/^T/)
+```
+
 ## Installation
 
-    $ component install component/enumerable
+  $ component install component/enumerable  
+  $ npm install component-enumerable
 
 ## API
 
@@ -39,7 +49,7 @@ users
   - [.last()](#lastnnumberfunction)
   - [.inGroupsOf()](#ingroupsofnnumber)
   - [.at()](#atinumber)
-  - [.value()](#value)
+  - [.value](#value)
 
 ## mixin()
 
@@ -285,7 +295,7 @@ users
 
   Return the value at the given index.
 
-## .value()
+## .value
 
   Return the enumerable value.
 
