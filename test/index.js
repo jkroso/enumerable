@@ -21,6 +21,35 @@ describe('.each(fn)', function(){
   })
 })
 
+describe('.each(string)', function(){
+  it('should call the method on each item', function(done){
+    var vals = [{a:c}, {a:c}]
+    var count = 2
+    function c() {if (--count === 0) done()}
+    _(vals).each('a')
+  })
+  it('should pass arguments to the method', function (done) {
+    var vals = [{a:c}, {a:c}]
+    var count = 2
+    function c(a,b) {
+      a.should.equal(1)
+      b.should.equal(2)
+      if (--count === 0) done()
+    }
+    _(vals).each('a', 1, 2)
+  })
+  it('should call in the context of the item', function (done) {
+    var o = {a:c}
+    var vals = [o, o]
+    var count = 2
+    function c(a,b) {
+      this.should.equal(o)
+      if (--count === 0) done()
+    }
+    _(vals).each('a')
+  })
+})
+
 describe('.add(...)', function(){
   it('should add all arguments to the enumerabke', function () {
     _([1,2,3]).add(4,5).value.should.eql([1,2,3,4,5]);

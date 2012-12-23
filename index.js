@@ -43,10 +43,13 @@ proto.length = function () {
 proto.each = function(fn){
 	var vals = this.value
 	  , len = vals.length
-	  , i = 0
-	while (i < len) {
-		fn(vals[i], i++)
+	  , i = -1
+	if (typeof fn === 'string') {
+		var args = Array.prototype.slice.call(arguments, 1)
+		while (++i < len) vals[i][fn].apply(vals[i], args)
 	}
+	else
+		while (++i < len) fn(vals[i], i)
 	return this
 }
 
