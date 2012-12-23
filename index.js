@@ -157,16 +157,10 @@ proto.reject = function(fn){
 	  , len = vals.length
 
 	if (typeof fn === 'string') fn = toFunction(fn)
+	else if (fn == null) return this.compact()
 
-	if (fn) {
-		for (var i = 0; i < len; ++i) {
-			if (!fn(vals[i], i)) arr.push(vals[i])
-		}
-	} else {
-		for (var i = 0; i < len; ++i) {
-			if (vals[i] != fn) arr.push(vals[i])
-		}
-	}
+	for (var i = 0; i < len; ++i)
+		if (!fn(vals[i], i)) arr.push(vals[i])
 
 	return new this.constructor(arr)
 }
@@ -183,7 +177,9 @@ proto.reject = function(fn){
 
 
 proto.compact = function(){
-	return this.reject(null)
+	return new this.constructor(
+		this.value.filter(function (val) {return val != null})
+	)
 }
 
 /**
@@ -606,7 +602,15 @@ proto.array = function(){
 	return this.value
 }
 
-var Enumerable = require('jkroso-protocol')(proto).implement(Array)
+/**
+ * Create the protocol
+ */
+var Enumerable = require('protocol')(proto)
+
+/**
+ * Register the Array type against the protocol
+ */
+Enumerable.implement(Array)
 
 /**
  * Expose `Enumerable`.
@@ -616,9 +620,7 @@ module.exports = Enumerable
 
 Enumerable.mixin = function (obj, get) {
 	Object.defineProperty(obj, 'value', {
-		get: get || function () {
-			return this
-		}
+		get: get || function () {return this}
 	})
 	Object.keys(Enumerable.interface).forEach(function (key) {
 		obj[key] = Enumerable.interface[key]

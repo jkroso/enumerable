@@ -13,7 +13,7 @@ function Range(from, to) {
 Enumerable.mixin(Range.prototype, function () {
 	var i = this.from
 	  , res = []
-	while (i < this.to)
+	while (i <= this.to)
 		res.push(i)
 	return res
 });
