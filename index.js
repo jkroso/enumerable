@@ -596,6 +596,20 @@ proto.array = function(){
 }
 
 /**
+ * Add items to the enumerable
+ * 
+ * @return {Enumerable}
+ */
+proto.add =
+proto.push = function () {
+	var arr = this.value
+	for (var i = 0, args = arguments.length; i < args; i++) {
+		arr[arr.length] = arguments[i]
+	}
+	return new this.constructor(arr)
+}
+
+/**
  * Create the protocol
  */
 var Enumerable = require('protocol')(proto)

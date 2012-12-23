@@ -21,6 +21,12 @@ describe('.each(fn)', function(){
   })
 })
 
+describe('.add(...)', function(){
+  it('should add all arguments to the enumerabke', function () {
+    _([1,2,3]).add(4,5).value.should.eql([1,2,3,4,5]);
+  })
+})
+
 describe('.find(fn)', function(){
   it('should return the first truthy callback value', function(){
     _([1,2,3]).find(function(v){ return v == 2 }).should.equal(2);
