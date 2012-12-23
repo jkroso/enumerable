@@ -196,9 +196,9 @@ describe('.reject(str)', function(){
   })
 })
 
-describe('.reject(val)', function(){
-  it('should reject values with ==', function(){
-    _([1,null,2,undefined]).reject(null).value.should.eql([1,2]);
+describe('.reject()', function () {
+  it('should act like compact', function () {
+    _([1,null,3,undefined]).reject().value.should.eql([1,3])
   })
 })
 

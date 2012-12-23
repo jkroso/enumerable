@@ -33,9 +33,7 @@ proto.length = function () {
 /**
  * Iterate each value and invoke `fn(val, i)`.
  *
- *    users.each(function(val, i){
- *
- *    })
+ *    users.each(function(val, i){})
  *
  * @param {Function} fn
  * @return {Object} self
@@ -141,11 +139,6 @@ proto.unique = function(){
  *
  *    items.reject('complete')
  *
- * Rejecting values via `==`:
- *
- *    data.reject(null)
- *    users.reject(tobi)
- *
  * @param {Function|String|Mixed} fn
  * @return {Enumerable}
  * @api public
@@ -157,8 +150,8 @@ proto.reject = function(fn){
 	  , len = vals.length
 
 	if (typeof fn === 'string') fn = toFunction(fn)
-	else if (fn == null) return this.compact()
-
+	if (fn == null) return this.compact()
+	
 	for (var i = 0; i < len; ++i)
 		if (!fn(vals[i], i)) arr.push(vals[i])
 
