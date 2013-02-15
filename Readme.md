@@ -27,50 +27,41 @@ Enumerable(users)
 
 ## API
 
-  - [mixin()](#mixin)
-  - [.each()](#eachfnfunction)
-  - [.map()](#mapfnfunction)
-  - [.select()](#selectfnfunctionstring)
-  - [.unique()](#unique)
-  - [.reject()](#rejectfnfunctionstringmixed)
-  - [.compact()](#compact)
-  - [.find()](#findfnfunction)
-  - [.findLast()](#findlastfnfunction)
-  - [.none()](#nonefnfunctionstring)
-  - [.any()](#anyfnfunction)
-  - [.count()](#countfnfunction)
-  - [.indexOf()](#indexofobjmixed)
-  - [.has()](#hasobjmixed)
-  - [.grep()](#grepreregexp)
-  - [.reduce()](#reducefnfunctionvalmixed)
-  - [.max()](#maxfnfunctionstring)
-  - [.sum()](#sumfnfunctionstring)
-  - [.first()](#firstnnumberfunction)
-  - [.last()](#lastnnumberfunction)
-  - [.inGroupsOf()](#ingroupsofnnumber)
-  - [.at()](#atinumber)
-  - [.value](#value)
+  - [Enumerable.each()](#protoeachfnfunctionstring)
+  - [Enumerable.map()](#protomapfnfunction)
+  - [Enumerable.select()](#protoselectfnfunctionstring)
+  - [Enumerable.unique()](#protounique)
+  - [Enumerable.reject()](#protorejectfnfunctionstringmixed)
+  - [Enumerable.compact()](#protocompact)
+  - [Enumerable.find()](#protofindfnfunctionstring)
+  - [Enumerable.findLast()](#protofindlastfnfunction)
+  - [Enumerable.none()](#protononefnfunctionstring)
+  - [Enumerable.some](#protosome)
+  - [Enumerable.count()](#protocountfnfunction)
+  - [Enumerable.indexOf()](#protoindexofobjmixed)
+  - [Enumerable.has()](#protohasobjmixed)
+  - [Enumerable.reduce()](#protoreducefnfunctionvalmixed)
+  - [Enumerable.max()](#protomaxfnfunctionstring)
+  - [Enumerable.sum()](#protosumfnfunctionstring)
+  - [Enumerable.first()](#protofirstnnumber)
+  - [Enumerable.last()](#protolastnnumber)
+  - [Enumerable.inGroupsOf()](#protoingroupsofnnumber)
+  - [Enumerable.at()](#protoatinumber)
+  - [Enumerable.value](#protovalue)
 
-## mixin()
-
-  Mixin to `obj`.
-  
-```js
- var Enumerable = require('enumerable');
- Enumerable(Something.prototype);
-```
-
-## .each(fn:Function)
+## Enumerable.each(fn:Function|String)
 
   Iterate each value and invoke `fn(val, i)`.
+  If `fn` is a string then the items will have 
+  their corresponding method called with any
+  additional arguments you pass
   
 ```js
- users.each(function(val, i){
-   
- })
+ users.each(function(val, i){})
+ user.each('save')
 ```
 
-## .map(fn:Function)
+## Enumerable.map(fn:Function)
 
   Map each return value from `fn(val, i)`.
   
@@ -89,7 +80,7 @@ Enumerable(users)
  users.map('name.first')
 ```
 
-## .select(fn:Function|String)
+## Enumerable.select(fn:Function|String)
 
   Select all values that return a truthy value of `fn(val, i)`.
   
@@ -106,7 +97,7 @@ Enumerable(users)
  items.select('complete')
 ```
 
-## .unique()
+## Enumerable.unique()
 
   Select all unique values.
   
@@ -114,7 +105,7 @@ Enumerable(users)
  nums.unique()
 ```
 
-## .reject(fn:Function|String|Mixed)
+## Enumerable.reject(fn:Function|String|Mixed)
 
   Reject all values that return a truthy value of `fn(val, i)`.
   
@@ -133,15 +124,7 @@ Enumerable(users)
  items.reject('complete')
 ```
 
-  
-  Rejecting values via `==`:
-  
-```js
- data.reject(null)
- users.reject(toni)
-```
-
-## .compact()
+## Enumerable.compact()
 
   Reject `null` and `undefined`.
   
@@ -150,7 +133,7 @@ Enumerable(users)
  // => [1,5]
 ```
 
-## .find(fn:Function)
+## Enumerable.find(fn:Function|String)
 
   Return the first value when `fn(val, i)` is truthy,
   otherwise return `undefined`.
@@ -161,7 +144,14 @@ Enumerable(users)
  })
 ```
 
-## .findLast(fn:Function)
+  
+  With a property string:
+  
+```js
+ users.find('age > 20')
+```
+
+## Enumerable.findLast(fn:Function)
 
   Return the last value when `fn(val, i)` is truthy,
   otherwise return `undefined`.
@@ -172,7 +162,7 @@ Enumerable(users)
  })
 ```
 
-## .none(fn:Function|String)
+## Enumerable.none(fn:Function|String)
 
   Assert that none of the invocations of `fn(val, i)` are truthy.
   
@@ -183,7 +173,7 @@ Enumerable(users)
  pets.none('admin')
 ```
 
-## .any(fn:Function)
+## Enumerable.some
 
   Assert that at least one invocation of `fn(val, i)` is truthy.
   
@@ -195,7 +185,7 @@ Enumerable(users)
  })
 ```
 
-## .count(fn:Function)
+## Enumerable.count(fn:Function)
 
   Count the number of times `fn(val, i)` returns true.
   
@@ -205,29 +195,21 @@ Enumerable(users)
  })
 ```
 
-## .indexOf(obj:Mixed)
+## Enumerable.indexOf(obj:Mixed)
 
   Determine the indexof `obj` or return `-1`.
 
-## .has(obj:Mixed)
+## Enumerable.has(obj:Mixed)
 
   Check if `obj` is present in this enumerable.
 
-## .grep(re:RegExp)
-
-  Grep values using the given `re`.
-  
-```js
- users.map('name').grep(/^tobi/i)
-```
-
-## .reduce(fn:Function, [val]:Mixed)
+## Enumerable.reduce(fn:Function, [val]:Mixed)
 
   Reduce with `fn(accumulator, val, i)` using
   optional `init` value defaulting to the first
   enumerable value.
 
-## .max(fn:Function|String)
+## Enumerable.max(fn:Function|String)
 
   Determine the max value.
   
@@ -253,7 +235,7 @@ Enumerable(users)
  nums.max()
 ```
 
-## .sum(fn:Function|String)
+## Enumerable.sum(fn:Function|String)
 
   Determine the sum.
   
@@ -279,25 +261,25 @@ Enumerable(users)
  nums.sum()
 ```
 
-## .first([n]:Number|Function)
+## Enumerable.first([n]:Number)
 
   Return the first value, or first `n` values.
 
-## .last([n]:Number|Function)
+## Enumerable.last([n]:Number)
 
   Return the last value, or last `n` values.
 
-## .inGroupsOf(n:Number)
+## Enumerable.inGroupsOf(n:Number)
 
   Return values in groups of `n`.
 
-## .at(i:Number)
+## Enumerable.at(i:Number)
 
   Return the value at the given index.
 
-## .value
+## Enumerable.value
 
-  Return the enumerable value.
+  Return a regular `Array`.
 
 ## License
 

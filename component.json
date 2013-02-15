@@ -2,7 +2,7 @@
   "name": "enumerable",
   "repo": "component/enumerable",
   "description": "Enumerable mixin",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "keywords": [
     "enum",
     "enumerable",
@@ -12,7 +12,9 @@
   ],
   "dependencies": {
     "component/to-function": "*",
-    "jkroso/protocol": "*"
+    "jkroso/protocol": "*",
+    "aheckmann/sliced": "*",
+    "jkroso/unique": "*"
   },
   "development": {},
   "scripts": [

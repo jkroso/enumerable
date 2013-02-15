@@ -3,9 +3,9 @@ var Enumerable = require('..')
   , User = require('./support/user')
   , _ = Enumerable
 
-Enumerable.mixin(User.prototype, function () {
-  return Object.keys(this)
-});
+Enumerable.implement(User, function Wrapper (val) {
+  this._ = Object.keys(val)
+})
 
 var user = new User('Tobi', 'Holowaychuk');
 
@@ -13,7 +13,7 @@ describe('.each(fn)', function(){
   it('should iterate each value', function(){
     var vals = [];
 
-    user.each(function(val, i){
+    _(user).each(function(val, i){
       vals.push(val, i);
     });
 
@@ -28,6 +28,7 @@ describe('.each(string)', function(){
     function c() {if (--count === 0) done()}
     _(vals).each('a')
   })
+  
   it('should pass arguments to the method', function (done) {
     var vals = [{a:c}, {a:c}]
     var count = 2
@@ -38,6 +39,7 @@ describe('.each(string)', function(){
     }
     _(vals).each('a', 1, 2)
   })
+
   it('should call in the context of the item', function (done) {
     var o = {a:c}
     var vals = [o, o]
@@ -52,7 +54,7 @@ describe('.each(string)', function(){
 
 describe('.add(...)', function(){
   it('should add all arguments to the enumerabke', function () {
-    _([1,2,3]).add(4,5).value.should.eql([1,2,3,4,5]);
+    _([1,2,3]).add(4,5).toJSON().should.eql([1,2,3,4,5]);
   })
 })
 
@@ -193,7 +195,7 @@ describe('.select(fn)', function(){
   it('should select values of truthy return', function(){
     _([1,2,3,4,5]).select(function(n){
       return n < 3;
-    }).value.should.eql([1,2]);
+    }).toJSON().should.eql([1,2]);
   })
 })
 
@@ -214,7 +216,7 @@ describe('.reject(fn)', function(){
   it('should select values of falsey return', function(){
     _([1,2,3,4,5]).reject(function(n){
       return n < 3;
-    }).value.should.eql([3,4,5]);
+    }).toJSON().should.eql([3,4,5]);
   })
 })
 
@@ -233,13 +235,13 @@ describe('.reject(str)', function(){
 
 describe('.reject()', function () {
   it('should act like compact', function () {
-    _([1,null,3,undefined]).reject().value.should.eql([1,3])
+    _([1,null,3,undefined]).reject().toJSON().should.eql([1,3])
   })
 })
 
 describe('.compact()', function(){
   it('should reject == null', function(){
-    _([1,null,2,undefined]).compact().value.should.eql([1,2]);
+    _([1,null,2,undefined]).compact().toJSON().should.eql([1,2]);
   })
 })
 
@@ -335,9 +337,9 @@ describe('.has(value)', function(){
   })
 })
 
-describe('.grep(regexp)', function(){
+describe('.select(regexp)', function(){
   it('should return values matching the regexp', function(){
-    _(['foo', 'bar', 'baz']).grep(/^b/).value.should.eql(['bar', 'baz']);
+    _(['foo', 'bar', 'baz']).select(/^b/).toJSON().should.eql(['bar', 'baz']);
   })
 })
 
@@ -362,14 +364,6 @@ describe('.first(n)', function(){
   })
 })
 
-describe('.first(fn)', function(){
-  it('should return the first truthy value', function(){
-    _(['foo', 'bar', 'something']).first(function(str){
-      return str.length > 3;
-    }).should.equal('something');
-  })
-})
-
 describe('.last()', function(){
   it('should return the last value', function(){
     _(['foo', 'bar']).last().should.equal('bar');
@@ -384,29 +378,21 @@ describe('.last(n)', function(){
   })
 })
 
-describe('.last(fn)', function(){
-  it('should return the last truthy value', function(){
-    _(['foo', 'bar', 'something', 'even-longer']).last(function(str){
-      return str.length > 3;
-    }).should.equal('even-longer');
-  })
-})
-
 describe('.inGroupsOf(n)', function(){
   it('should return an array in groups of N', function(){
     _([1,2,3,4,5,6])
       .inGroupsOf(3)
-      .value
+      .toJSON()
       .should.eql([[1,2,3], [4,5,6]]);
 
     _([1,2,3,4,5,6])
       .inGroupsOf(2)
-      .value
+      .toJSON()
       .should.eql([[1,2], [3,4], [5,6]]);
 
     _([1,2,3,4,5,6,7])
       .inGroupsOf(2)
-      .value
+      .toJSON()
       .should.eql([[1,2], [3,4], [5,6], [7]]);
   })
 })
@@ -416,7 +402,7 @@ describe('.map(fn)', function(){
     _([1,2,3])
     .map(function(n){
       return n * 2;
-    }).value.should.eql([2,4,6]);
+    }).toJSON().should.eql([2,4,6]);
   })
 })
 
@@ -424,7 +410,7 @@ describe('.map(str)', function(){
   it('should map property values', function(){
     _([{ age: 2 }, { age: 2 }, { age: 8 }])
       .map('age')
-      .value
+      .toJSON()
       .should.eql([2, 2, 8]);
   })
 
@@ -479,13 +465,13 @@ describe('.array()', function(){
 
 describe('.toJSON()', function(){
   it('should alias .array()', function(){
-    JSON.stringify(user).should.equal('["first","last"]');
+    JSON.stringify(_(user)).should.equal('["first","last"]');
     JSON.stringify(_([1,2,3])).should.equal('[1,2,3]');
   })
 })
 
 describe('.toString()', function(){
   it('should return a string representation', function(){
-    user.toString().should.equal('[Enumerable ["first","last"]]');
+    _(user).toString().should.equal('[Enumerable ["first","last"]]');
   })
 })

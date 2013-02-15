@@ -4,7 +4,14 @@
  */
 
 var toFunction = require('to-function')
+  , slice = require('sliced')
+  , protocol = require('protocol')
+  , unique = require('unique')
   , proto = {}
+
+function notNull(val) {
+	return val != null
+}
 
 /**
  * Return a string representation of this enumerable.
@@ -26,30 +33,40 @@ proto.toString = function(){
  * @return {Number} item count
  * @api public
  */
+
+proto.size =
 proto.length = function () {
-	return this.value.length
+	return this._.length
 }
 
 /**
  * Iterate each value and invoke `fn(val, i)`.
+ * If `fn` is a string then the items will have 
+ * their corresponding method called with any
+ * additional arguments you pass
  *
  *    users.each(function(val, i){})
+ *    user.each('save')
  *
- * @param {Function} fn
+ * @param {Function|String} fn
  * @return {Object} self
  * @api public
  */
 
 proto.each = function(fn){
-	var vals = this.value
+	var vals = this._
 	  , len = vals.length
-	  , i = -1
+
 	if (typeof fn === 'string') {
-		var args = Array.prototype.slice.call(arguments, 1)
-		while (++i < len) vals[i][fn].apply(vals[i], args)
+		var args = slice(arguments, 1)
+		for (var i = 0; i < len; i++) {
+			vals[i][fn].apply(vals[i], args)
+		}
+	} else {
+		for (var i = 0; i < len; i++) {
+			fn(vals[i], i)
+		}
 	}
-	else
-		while (++i < len) fn(vals[i], i)
 	return this
 }
 
@@ -72,14 +89,16 @@ proto.each = function(fn){
  */
 
 proto.map = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
 	  , len = vals.length
-	  , arr = new Array(len)
+	  , arr = this._ = new Array(len)
+
 	for (var i = 0; i < len; ++i) {
 		arr[i] = fn(vals[i], i)
 	}
-	return new this.constructor(arr)
+
+	return this
 }
 
 /**
@@ -99,14 +118,16 @@ proto.map = function(fn){
  */
 
 proto.select = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var arr = []
-	  , vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
+	  , arr = this._ = []
 	  , len = vals.length
+
 	for (var i = 0; i < len; ++i) {
 		if (fn(vals[i], i)) arr.push(vals[i])
 	}
-	return new this.constructor(arr)
+
+	return this
 }
 
 /**
@@ -119,14 +140,8 @@ proto.select = function(fn){
  */
 
 proto.unique = function(){
-	var arr = []
-	  , vals = this.value
-	  , len = vals.length
-	for (var i = 0; i < len; ++i) {
-		if (~arr.indexOf(vals[i])) continue
-		arr.push(vals[i])
-	}
-	return new this.constructor(arr)
+	this._ = unique(this._)
+	return this
 }
 
 /**
@@ -148,17 +163,19 @@ proto.unique = function(){
  */
 
 proto.reject = function(fn){
-	var arr = []
-	  , vals = this.value
-	  , len = vals.length
-
-	if (typeof fn === 'string') fn = toFunction(fn)
 	if (fn == null) return this.compact()
-	
-	for (var i = 0; i < len; ++i)
-		if (!fn(vals[i], i)) arr.push(vals[i])
+	if (typeof fn !== 'function') fn = toFunction(fn)
 
-	return new this.constructor(arr)
+	var arr = []
+	  , vals = this._
+	  , len = vals.length
+	
+	for (var i = 0; i < len; ++i) {
+		if (!fn(vals[i], i)) arr.push(vals[i])
+	}
+
+	this._ = arr
+	return this
 }
 
 /**
@@ -173,9 +190,8 @@ proto.reject = function(fn){
 
 
 proto.compact = function(){
-	return new this.constructor(
-		this.value.filter(function (val) {return val != null})
-	)
+	this._ = this._.filter(notNull)
+	return this
 }
 
 /**
@@ -196,9 +212,10 @@ proto.compact = function(){
  */
 
 proto.find = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
 	  , len = vals.length
+
 	for (var i = 0; i < len; ++i) {
 		if (fn(vals[i], i)) return vals[i]
 	}
@@ -218,8 +235,8 @@ proto.find = function(fn){
  */
 
 proto.findLast = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
 	  , i = vals.length
 	while (i--) {
 		if (fn(vals[i], i)) return vals[i]
@@ -244,8 +261,8 @@ proto.findLast = function(fn){
 
 proto.all =
 proto.every = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
 	  , i = vals.length
 	while (i--) {
 		if (!fn(vals[i], i)) return false
@@ -267,8 +284,8 @@ proto.every = function(fn){
  */
 
 proto.none = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
 	  , i = vals.length
 	while (i--) {
 		if (fn(vals[i], i)) return false
@@ -289,10 +306,11 @@ proto.none = function(fn){
  * @return {Boolean}
  * @api public
  */
+
 proto.some = 
 proto.any = function(fn){
-	if (typeof fn === 'string') fn = toFunction(fn)
-	var vals = this.value
+	if (typeof fn !== 'function') fn = toFunction(fn)
+	var vals = this._
 	  , i = vals.length
 	while (i--) {
 		if (fn(vals[i], i)) return true
@@ -313,7 +331,7 @@ proto.any = function(fn){
  */
 
 proto.count = function(fn){
-	var vals = this.value
+	var vals = this._
 	  , i = vals.length
 	  , n = 0
 	while (i--) {
@@ -331,7 +349,7 @@ proto.count = function(fn){
  */
 
 proto.indexOf = function(obj){
-	var vals = this.value
+	var vals = this._
 	  , len = vals.length
 	for (var i = 0; i < len; ++i) {
 		if (vals[i] === obj) return i
@@ -348,27 +366,7 @@ proto.indexOf = function(obj){
  */
 
 proto.has = function(obj){
-	return !! ~this.indexOf(obj)
-}
-
-/**
- * Grep values using the given `re`.
- *
- *    users.map('name').grep(/^tobi/i)
- *
- * @param {RegExp} re
- * @return {Enumerable}
- * @api public
- */
-
-proto.grep = function(re){
-	var vals = this.value
-	  , len = vals.length
-	  , arr = []
-	for (var i = 0; i < len; ++i) {
-		if (re.test(vals[i])) arr.push(vals[i])
-	}
-	return new this.constructor(arr)
+	return this.indexOf(obj) >= 0
 }
 
 /**
@@ -384,12 +382,12 @@ proto.grep = function(re){
 
 proto.reduce = function(fn, init){
 	var i = 0
-	  , vals = this.value
+	  , vals = this._
 	  , len = vals.length
 
-	var val = (null == init
+	var val = arguments.length < 2
 		? vals[i++]
-		: init)
+		: init
 
 	while (i < len) {
 		val = fn(val, vals[i], i++)
@@ -422,18 +420,20 @@ proto.reduce = function(fn, init){
 
 proto.max = function(fn){
 	var max = -Infinity
-	  , vals = this.value
+	  , vals = this._
 	  , i = vals.length
 
 	if (fn) {
-		if (typeof fn === 'string') fn = toFunction(fn)
-		var n
-		while (i--)
-			if ((n = fn(vals[i], i)) > max) max = n
-	} 
-	else
-		while (i--)
+		if (typeof fn !== 'function') fn = toFunction(fn)
+		while (i--) {
+			var n = fn(vals[i], i)
+			if (n > max) max = n
+		}
+	} else {
+		while (i--) {
 			if (vals[i] > max) max = vals[i]
+		}
+	}
 
 	return max
 }
@@ -461,19 +461,18 @@ proto.max = function(fn){
  */
 
 proto.sum = function(fn){
-	var ret
-	  , n = 0
-	  , vals = this.value
+	var n = 0
+	  , vals = this._
 	  , i = vals.length
 
 	if (fn) {
-		if (typeof fn === 'string') fn = toFunction(fn)
-		while (i--) 
+		if (typeof fn !== 'function') fn = toFunction(fn)
+		while (i--) {
 			n += fn(vals[i], i)
+		}
+	} else {
+		while (i--) n += vals[i]
 	}
-	else
-		while (i--) 
-			n += vals[i]
 
 	return n
 }
@@ -502,48 +501,36 @@ proto.sum = function(fn){
 
 proto.avg =
 proto.mean = function(fn){
-	return this.sum(fn) / this.value.length
+	return this.sum(fn) / this._.length
 }
 
 /**
  * Return the first value, or first `n` values.
  *
- * @param {Number|Function} [n]
+ * @param {Number} [n]
  * @return {Array|Mixed}
  * @api public
  */
 
 proto.first = function(n){
-	if (n) {
-		if (typeof n === 'function') return this.find(n)
-		var vals = this.value
-		return vals.slice(0, Math.min(n, vals.length))
-	}
-	return this.value[0]
+	if (n != null) return this._.slice(0, n)
+	return this._[0]
 }
 
 /**
  * Return the last value, or last `n` values.
  *
- * @param {Number|Function} [n]
+ * @param {Number} [n]
  * @return {Array|Mixed}
  * @api public
  */
 
 proto.last = function(n){
-	if ('function' == typeof n) return this.findLast(n)
-	var vals = this.value
-	  , len = vals.length
-
-	if (n) {
-		var i = Math.max(0, len - n)
-		  , arr = []
-		while (i < len)
-			arr.push(vals[i++])
-		return arr
+	var vals = this._
+	if (n != null) {
+		return vals.slice(Math.max(0, vals.length - n))
 	}
-
-	return vals[len - 1]
+	return vals[vals.length - 1]
 }
 
 /**
@@ -555,14 +542,14 @@ proto.last = function(n){
  */
 
 proto.inGroupsOf = function(n){
-	var arr = []
-	  , group = []
-	  , vals = this.value
+	var group = []
+	  , vals = this._
+	  , arr = this._ = []
 	  , len = vals.length
 
-	for (var i = 0; i < len; ++i) {
+	for (var i = 0; i < len;) {
 		group.push(vals[i])
-		if ((i + 1) % n === 0) {
+		if ((++i) % n === 0) {
 			arr.push(group)
 			group = []
 		}
@@ -570,7 +557,7 @@ proto.inGroupsOf = function(n){
 
 	if (group.length) arr.push(group)
 
-	return new this.constructor(arr)
+	return this
 }
 
 /**
@@ -582,7 +569,7 @@ proto.inGroupsOf = function(n){
  */
 
 proto.at = function(i){
-	return this.value[i]
+	return this._[i]
 }
 
 /**
@@ -592,10 +579,10 @@ proto.at = function(i){
  * @api public
  */
 
-proto.valueOf = 
+proto.value = 
 proto.toJSON =
 proto.array = function(){
-	return this.value
+	return this._
 }
 
 /**
@@ -603,37 +590,20 @@ proto.array = function(){
  * 
  * @return {Enumerable}
  */
+
 proto.add =
 proto.push = function () {
-	var arr = this.value
-	for (var i = 0, args = arguments.length; i < args; i++) {
-		arr[arr.length] = arguments[i]
+	var arr = this._
+	for (var i = 0, len = arguments.length; i < len; i++) {
+		arr[arr.length++] = arguments[i]
 	}
-	return new this.constructor(arr)
+	return this
 }
 
-/**
- * Create the protocol
- */
-var Enumerable = require('protocol')(proto)
+// Create the protocol
+var Enumerable = protocol('Enumerable', proto)
 
-/**
- * Register the Array type against the protocol
- */
+// Register `Array`
 Enumerable.implement(Array)
 
-/**
- * Expose `Enumerable`.
- */
-
 module.exports = Enumerable
-
-Enumerable.mixin = function (obj, get) {
-	Object.defineProperty(obj, 'value', {
-		get: get || function () {return this}
-	})
-	Object.keys(Enumerable.interface).forEach(function (key) {
-		obj[key] = Enumerable.interface[key]
-	})
-	return obj
-}

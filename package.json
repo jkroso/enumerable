@@ -1,9 +1,11 @@
 {
-  "name": "enumerable-component",
-  "version": "0.3.1",
+  "name": "enumerable",
+  "version": "0.4.0",
   "dependencies": {
     "to-function": "1.1.1",
-    "protocol": "jkroso/Protocol"
+    "sliced": "git://github.com/aheckmann/sliced",
+    "protocol": "git://github.com/jkroso/Protocol",
+    "unique": "git://github.com/jkroso/unique"
   },
   "devDependencies": {
     "mocha": "*",
